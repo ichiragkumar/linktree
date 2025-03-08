@@ -1,49 +1,76 @@
 import { useState, useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import Sidebar from './components/Sidebar';
-import Topbar from './components/Topbar';
 import UserProfile from './components/UserProfile';
-import LandingPage from './components/LandingPage';
 import Login from './components/Login';
 import Signup from './components/Signup';
+import LandingPage from './components/LandingPage';
+import Dashboard from './components/Dashboard';
+
 
 function App() {
-  const [selectedUser, setSelectedUser] = useState<{
-    username: string;
-    links: string[];
-  } | null>(null);
-
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [user, setUser] = useState<{ username: string; links: string[] } | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
-    setIsAuthenticated(!!token);
+    if (token) {
+      fetch(`${import.meta.env.VITE_API_URL}/user/me`, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.status) {
+            setUser(data.user);
+            setIsAuthenticated(true);
+          } else {
+            localStorage.removeItem('token');
+            setIsAuthenticated(false);
+          }
+        })
+        .catch(() => {
+          localStorage.removeItem('token');
+          setIsAuthenticated(false);
+        })
+        .finally(() => {
+          setIsLoading(false);
+        });
+    } else {
+      setIsLoading(false);
+    }
   }, []);
 
-  return (
-    <Routes>
-      {/* Protected Route */}
-      {isAuthenticated ? (
-        <Route
-          path="/"
-          element={
-            <div className="flex h-screen">
-              <Sidebar onSelectUser={(user) => setSelectedUser(user)} />
-              <div className="flex flex-col flex-1">
-                <Topbar />
-                <UserProfile user={selectedUser} />
-              </div>
-            </div>
-          }
-        />
-      ) : (
-        <Route path="/" element={<Navigate to="/landing" />} />
-      )}
+  const handleLoginSuccess = (userData: { username: string; links: string[] }) => {
+    setUser(userData);
+    setIsAuthenticated(true);
+  };
 
-      {/* Public Routes */}
-      <Route path="/landing" element={<LandingPage />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/signup" element={<Signup />} />
+  if (isLoading) {
+    return <div className="h-screen flex justify-center items-center bg-gray-900 text-white">Loading...</div>;
+  }
+
+  return (
+
+
+
+    <Routes>
+      <Route path="/" element={<LandingPage />} />
+      <Route 
+        path="/login" 
+        element={isAuthenticated ? <Navigate to="/dashboard" /> : <Login onLoginSuccess={handleLoginSuccess} />} 
+      />
+      <Route 
+        path="/signup" 
+        element={isAuthenticated ? <Navigate to="/dashboard" /> : <Signup />} 
+      />
+      <Route 
+        path="/dashboard" 
+        element={isAuthenticated ? <Dashboard user={user} /> : <Navigate to="/login" />} 
+      />
+      <Route path="*" element={<Navigate to="/" />} />
     </Routes>
   );
 }

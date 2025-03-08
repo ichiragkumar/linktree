@@ -1,7 +1,11 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const Login = () => {
+interface LoginProps {
+  onLoginSuccess: (user: { username: string; links: string[] }) => void;
+}
+
+export const Login = ({ onLoginSuccess }: LoginProps) => {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -24,7 +28,22 @@ const Login = () => {
       }
 
       localStorage.setItem('token', data.token);
-      navigate('/'); // Redirect to home page
+
+
+      const userResponse = await fetch(`${import.meta.env.VITE_API_URL}/user/me`, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${data.token}`,
+        },
+      });
+
+      const userData = await userResponse.json();
+      if (userData.status) {
+        onLoginSuccess(userData.user);
+        navigate('/');
+      } else {
+        throw new Error(userData.msg || 'Failed to fetch user data');
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong');
     }

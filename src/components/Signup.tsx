@@ -24,7 +24,8 @@ const Signup = () => {
         throw new Error(data.msg || 'Failed to sign up');
       }
 
-      navigate('/login'); // Redirect to login page after successful signup
+      // After successful signup, redirect to login page
+      navigate('/login');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong');
     }

@@ -13,18 +13,21 @@ interface UserProfileProps {
     return (
       <div className="flex-1 p-4">
         <h2 className="text-2xl font-bold mb-4">{user.username}'s Links</h2>
-        <ul>
-          {user.links.map((link, index) => (
-            <li key={index} className="mb-2">
-              <a href={link} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
-                {link}
-              </a>
-            </li>
-          ))}
-        </ul>
+        {user.links.length > 0 ? (
+          <ul>
+            {user.links.map((link, index) => (
+              <li key={index} className="mb-2">
+                <a href={link} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
+                  {link}
+                </a>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-gray-400">This user has no links yet.</p>
+        )}
       </div>
     );
   };
   
   export default UserProfile;
-  
